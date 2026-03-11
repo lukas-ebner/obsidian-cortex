@@ -1,0 +1,10 @@
+{
+  "id": "cortex",
+  "name": "Cortex",
+  "version": "0.1.0",
+  "minAppVersion": "1.0.0",
+  "description": "Manage Cortex knowledge base projects directly from Obsidian. Activate folders as projects, trigger syncs, and monitor project status.",
+  "author": "Fracto",
+  "authorUrl": "https://frct.me",
+  "isDesktopOnly": false
+}

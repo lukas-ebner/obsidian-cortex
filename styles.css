@@ -1,0 +1,11 @@
+/* Cortex folder badge */
+.cortex-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  color: var(--interactive-accent);
+  font-size: 8px;
+  line-height: 1;
+  vertical-align: middle;
+  opacity: 0.8;
+}
