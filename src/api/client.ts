@@ -48,7 +48,12 @@ export class CortexApiClient {
     }
     const response = await requestUrl(params);
     if (response.status >= 400) {
-      const detail = response.json?.detail || response.text || `HTTP ${response.status}`;
+      let detail: string;
+      try {
+        detail = response.json?.detail || response.text || `HTTP ${response.status}`;
+      } catch {
+        detail = response.text || `HTTP ${response.status}`;
+      }
       throw new Error(`Cortex API error (${response.status}): ${detail}`);
     }
     return response.json as T;
