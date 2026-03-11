@@ -6,6 +6,8 @@ import {
   SyncResponse,
   ProjectStatusResponse,
   ProjectItem,
+  ConnectSyncResponse,
+  SyncStatusResponse,
 } from "../types";
 
 /**
@@ -93,6 +95,22 @@ export class CortexApiClient {
       "/v2/projects/enable-folder",
       { folder_path: folderPath }
     );
+  }
+
+  // ── Sync endpoints ──
+
+  async connectSync(
+    deviceId: string,
+    deviceName: string
+  ): Promise<ConnectSyncResponse> {
+    return this.request<ConnectSyncResponse>("POST", "/v2/sync/connect", {
+      device_id: deviceId,
+      device_name: deviceName,
+    });
+  }
+
+  async syncStatus(): Promise<SyncStatusResponse> {
+    return this.request<SyncStatusResponse>("GET", "/v2/sync/status");
   }
 
   // ── Connection test ──

@@ -5,6 +5,11 @@ export interface CortexSettings {
   apiKey: string;
   serverVaultRoot: string; // e.g. "/app/data/lukas-vault/Obsidian-Cloud"
   pollIntervalSeconds: number;
+  // Syncthing auto-connect
+  syncthingApiUrl: string; // default: "http://127.0.0.1:8384"
+  syncthingApiKey: string; // local Syncthing API key
+  syncConnected: boolean; // true after successful connect
+  syncFolderId: string; // Syncthing folder ID after connect
 }
 
 export const DEFAULT_SETTINGS: CortexSettings = {
@@ -12,7 +17,29 @@ export const DEFAULT_SETTINGS: CortexSettings = {
   apiKey: "",
   serverVaultRoot: "",
   pollIntervalSeconds: 60,
+  syncthingApiUrl: "http://127.0.0.1:8384",
+  syncthingApiKey: "",
+  syncConnected: false,
+  syncFolderId: "",
 };
+
+// ── Sync API types ──
+
+export interface ConnectSyncResponse {
+  server_device_id: string;
+  server_address: string;
+  folder_id: string;
+  folder_label: string;
+  server_vault_root: string;
+}
+
+export interface SyncStatusResponse {
+  connected: boolean;
+  folder_id: string | null;
+  folder_label: string | null;
+  server_device_id: string | null;
+  server_address: string | null;
+}
 
 // ── API Response types ──
 
