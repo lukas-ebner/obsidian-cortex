@@ -86,7 +86,9 @@ export default class CortexPlugin extends Plugin {
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
     this.api.configure(this.settings.serverUrl, this.settings.apiKey);
-    this.startPolling(); // Restart with new interval
+    this.serverProjectRoot = ""; // Reset so it gets re-discovered with new settings
+    this.startPolling();
+    await this.refreshAllProjects();
   }
 
   // ── Polling ──
@@ -116,27 +118,37 @@ export default class CortexPlugin extends Plugin {
     }
 
     try {
-      // Get the vault root folder listing to learn project_root
-      const rootPath = this.getServerVaultRelPath("");
-      const response = await this.api.listFolders(rootPath);
-      this.serverProjectRoot = response.project_root;
+      // Step 1: Discover project_root if unknown
+      if (!this.serverProjectRoot) {
+        const rootResponse = await this.api.listFolders("");
+        this.serverProjectRoot = rootResponse.project_root;
+      }
 
-      // Update path mapper
-      this.pathMapper = new PathMapper(
-        this.settings.serverVaultRoot,
-        this.serverProjectRoot
-      );
+      // Step 2: Compute vault path relative to project_root
+      const vaultAbs = this.settings.serverVaultRoot.replace(/\/+$/, "");
+      const projectRoot = this.serverProjectRoot.replace(/\/+$/, "");
+      let vaultRelPath: string;
+      if (vaultAbs.startsWith(projectRoot + "/")) {
+        vaultRelPath = vaultAbs.slice(projectRoot.length + 1);
+      } else if (vaultAbs === projectRoot) {
+        vaultRelPath = "";
+      } else {
+        // Fallback: strip leading slash
+        vaultRelPath = vaultAbs.replace(/^\/+/, "");
+      }
 
-      // Build folder states from response
+      // Step 3: Update path mapper
+      this.pathMapper = new PathMapper(vaultAbs, projectRoot);
+
+      // Step 4: List folders in vault
+      const response = await this.api.listFolders(vaultRelPath);
       this.folderStates.clear();
       this.mapFolderStates(response.folders);
 
-      // Count active projects
+      // Step 5: Count active projects and update UI
       const projects = await this.api.listProjects();
       const activeCount = projects.projects.filter((p) => p.is_active).length;
       this.updateStatusBar(activeCount, true);
-
-      // Update folder decorations
       this.applyDecorations();
     } catch (e) {
       console.error("Cortex refresh failed:", e);
@@ -298,14 +310,4 @@ export default class CortexPlugin extends Plugin {
     new Notice("Cortex: Current folder is not an active project");
   }
 
-  // ── Helpers ──
-
-  private getServerVaultRelPath(localPath: string): string {
-    if (!this.settings.serverVaultRoot) return localPath;
-    // Strip leading PROJECT_ROOT prefix from serverVaultRoot to get the rel_path
-    // for the folders API. Initially we don't know project_root, so use the full path.
-    const root = this.settings.serverVaultRoot.replace(/^\/+/, "").replace(/\/+$/, "");
-    if (!localPath) return root;
-    return `${root}/${localPath}`;
-  }
 }
